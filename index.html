@@ -48,7 +48,7 @@
     display:inline-block; font-size:11px; padding:2px 10px; border-radius:99px;
     margin-top:4px; color:#fff;
   }
-  .tag.cute{ background:#ff8fab; } .tag.photo{ background:#4c9ff0; } .tag.real{ background:#8a67d8; }
+  .tag.cute{ background:#ff8fab; } .tag.photo{ background:#4c9ff0; } .tag.real{ background:#8a67d8; } .tag.art{ background:#d88a3d; }
   .section-title small{ font-size:12px; color:#8b8a99; font-weight:normal; }
   #filterRow{ max-width:1060px; margin:0 auto 12px; display:flex; gap:8px; }
   .ftab{
@@ -186,6 +186,7 @@
     <button class="ftab" data-f="かわいい">🎀 かわいい</button>
     <button class="ftab" data-f="けしき">📷 けしき</button>
     <button class="ftab" data-f="しゃしん">📸 しゃしん</button>
+    <button class="ftab" data-f="めいが">🖼 めいが</button>
   </div>
   <div id="gallery"></div>
   <div class="section-title">🧩 ピースのかず（レベル）</div>
@@ -3565,6 +3566,13 @@ const IMAGES = [
   { name:'やまのみずうみ',       tag:'しゃしん', photo:'photos/lake.jpg',      credit:'Vyacheslav Argenberg / CC BY 4.0' },
   { name:'ゆうやけのたんぼ',     tag:'しゃしん', photo:'photos/tanbo.jpg',     credit:'Basile Morin / CC BY-SA 4.0' },
   { name:'ほんもののオーロラ',   tag:'しゃしん', photo:'photos/aurora.jpg',    credit:'Joshua Strang (U.S. Air Force) / Public domain' },
+  // ---- めいが（パブリックドメインの名画・6） ----
+  { name:'おおなみ（ほくさい）',         tag:'めいが', photo:'photos/art_hokusai.jpg',   credit:'葛飾北斎「神奈川沖浪裏」/ Public domain' },
+  { name:'ほしづきよ（ゴッホ）',         tag:'めいが', photo:'photos/art_gogh_star.jpg', credit:'ゴッホ「星月夜」/ Public domain' },
+  { name:'ゴッホのおへや',               tag:'めいが', photo:'photos/art_gogh_room.jpg', credit:'ゴッホ「アルルの寝室」/ Public domain' },
+  { name:'こうえんのにちようび（スーラ）', tag:'めいが', photo:'photos/art_seurat.jpg',    credit:'スーラ「グランド・ジャット島の日曜日の午後」/ Public domain' },
+  { name:'ライオンとたびびと（ルソー）',   tag:'めいが', photo:'photos/art_rousseau.jpg',  credit:'ルソー「眠るジプシー女」/ Public domain' },
+  { name:'すいれんのはし（モネ）',       tag:'めいが', photo:'photos/art_monet.jpg',     credit:'モネ「睡蓮の池と日本の橋」/ Public domain' },
 ];
 
 const LEVELS = [
@@ -3619,7 +3627,7 @@ const levelsEl = document.getElementById('levels');
 
 document.getElementById('imgCount').textContent = `（ぜんぶで ${IMAGES.length} しゅるい）`;
 document.getElementById('creditNote').textContent =
-  '📸のしゃしんは Wikimedia Commons のフリー画像です： ' +
+  '📸のしゃしんと🖼のめいがは Wikimedia Commons のフリー画像です： ' +
   IMAGES.filter(im => im.photo).map(im => `「${im.name}」${im.credit}`).join(' ／ ');
 let galleryFilter = 'all';
 function applyFilter(){
@@ -3650,9 +3658,15 @@ document.querySelectorAll('.ftab').forEach(b => {
     const nm = document.createElement('div');
     nm.className = 'nm'; nm.textContent = im.name;
     card.appendChild(nm);
+    const TAG_UI = {
+      'かわいい': ['cute', '🎀 かわいい'],
+      'けしき':   ['photo', '📷 けしき'],
+      'しゃしん': ['real', '📸 しゃしん'],
+      'めいが':   ['art', '🖼 めいが'],
+    };
     const tg = document.createElement('div');
-    tg.className = 'tag ' + (im.tag === 'かわいい' ? 'cute' : im.tag === 'けしき' ? 'photo' : 'real');
-    tg.textContent = im.tag === 'かわいい' ? '🎀 かわいい' : im.tag === 'けしき' ? '📷 けしき' : '📸 しゃしん';
+    tg.className = 'tag ' + TAG_UI[im.tag][0];
+    tg.textContent = TAG_UI[im.tag][1];
     card.appendChild(tg);
     card.onclick = () => {
       selImg = i;
