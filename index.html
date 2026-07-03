@@ -50,11 +50,11 @@
   }
   .tag.cute{ background:#ff8fab; } .tag.photo{ background:#4c9ff0; } .tag.real{ background:#8a67d8; } .tag.art{ background:#d88a3d; }
   .section-title small{ font-size:12px; color:#8b8a99; font-weight:normal; }
-  #filterRow{ max-width:1060px; margin:0 auto 12px; display:flex; gap:8px; }
+  #filterRow{ max-width:1060px; margin:0 auto 12px; display:flex; gap:8px; flex-wrap:wrap; }
   .ftab{
-    font-size:14px; font-weight:bold; padding:8px 22px; border-radius:99px;
+    font-size:14px; font-weight:bold; padding:8px 16px; border-radius:99px;
     background:#fff; color:#8b8a99; border:3px solid #f0e4d5;
-    transition:transform .1s, background .15s;
+    transition:transform .1s, background .15s; white-space:nowrap;
   }
   .ftab:hover{ transform:translateY(-1px); }
   .ftab.sel{ background:#ff8fab; color:#fff; border-color:#ff8fab; }
