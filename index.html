@@ -48,7 +48,7 @@
     display:inline-block; font-size:11px; padding:2px 10px; border-radius:99px;
     margin-top:4px; color:#fff;
   }
-  .tag.cute{ background:#ff8fab; } .tag.photo{ background:#4c9ff0; }
+  .tag.cute{ background:#ff8fab; } .tag.photo{ background:#4c9ff0; } .tag.real{ background:#8a67d8; }
   .section-title small{ font-size:12px; color:#8b8a99; font-weight:normal; }
   #filterRow{ max-width:1060px; margin:0 auto 12px; display:flex; gap:8px; }
   .ftab{
@@ -185,6 +185,7 @@
     <button class="ftab sel" data-f="all">ぜんぶ</button>
     <button class="ftab" data-f="かわいい">🎀 かわいい</button>
     <button class="ftab" data-f="けしき">📷 けしき</button>
+    <button class="ftab" data-f="しゃしん">📸 しゃしん</button>
   </div>
   <div id="gallery"></div>
   <div class="section-title">🧩 ピースのかず（レベル）</div>
@@ -240,7 +241,8 @@
     <div class="step"><div class="ic">👆</div><div class="tx">ピースを<b>ゆびやマウスでドラッグ</b>してうごかそう。ただしいばしょのちかくではなすと…<b>「パチッ！」</b>とはまるよ。</div></div>
     <div class="step"><div class="ic">🔍</div><div class="tx">ちいさいピースは<b>＋ボタン</b>やマウスホイール、ゆび2ほんで<b>おおきくできる</b>よ。なにもないところをドラッグすると、まわりがみられるよ。</div></div>
     <div class="step"><div class="ic">👀</div><div class="tx"><b>みほん</b>：できあがりのえが、だいのうえにうっすらみえるよ。<br><b>💡 ヒント</b>：ピース（あおいまる）と、はまるばしょ（ピンクのわく）がひかるよ。<br><b>🌀 ちらす</b>：かさなったピースをばらばらにならべなおすよ。</div></div>
-    <div class="step"><div class="ic">🎉</div><div class="tx">ぜんぶはめると…<b>えがうごきだすよ！</b>どうぶつがうごいたり、さかなやなみがうごいたり。おたのしみに！</div></div>
+    <div class="step"><div class="ic">🎉</div><div class="tx">ぜんぶはめると…<b>えがうごきだすよ！</b>どうぶつがうごいたり、さかなやなみがうごいたり。しゃしんはゆっくりズームするよ。おたのしみに！</div></div>
+    <div id="creditNote" style="font-size:11px; color:#8b8a99; line-height:1.7; margin-top:14px;"></div>
     <button id="helpClose">わかった！</button>
   </div>
 </div>
@@ -3554,6 +3556,15 @@ const IMAGES = [
   { name:'あめあがりのにじ',     tag:'けしき',   seed:317, draw:drawRainbowMeadow },
   { name:'みなとのよるけい',     tag:'けしき',   seed:318, draw:drawHarbor },
   { name:'ほたるのよる',         tag:'けしき',   seed:319, draw:drawFireflies },
+  // ---- しゃしん（ほんものの写真・8） ----
+  { name:'さくらとふじさん',     tag:'しゃしん', photo:'photos/fuji.jpg',      credit:'Midori / CC BY 3.0' },
+  { name:'ゆきのなかのねこ',     tag:'しゃしん', photo:'photos/cat.jpg',       credit:'Von.grzanka / CC BY-SA 3.0' },
+  { name:'レッサーパンダ',       tag:'しゃしん', photo:'photos/redpanda.jpg',  credit:'Mathias Appel / CC0' },
+  { name:'こうげんのうまたち',   tag:'しゃしん', photo:'photos/horses.jpg',    credit:'UnpetitproleX / CC BY 4.0' },
+  { name:'おおきなひまわり',     tag:'しゃしん', photo:'photos/sunflower.jpg', credit:'Johann Jaritz / CC BY-SA 4.0' },
+  { name:'やまのみずうみ',       tag:'しゃしん', photo:'photos/lake.jpg',      credit:'Vyacheslav Argenberg / CC BY 4.0' },
+  { name:'ゆうやけのたんぼ',     tag:'しゃしん', photo:'photos/tanbo.jpg',     credit:'Basile Morin / CC BY-SA 4.0' },
+  { name:'ほんもののオーロラ',   tag:'しゃしん', photo:'photos/aurora.jpg',    credit:'Joshua Strang (U.S. Air Force) / Public domain' },
 ];
 
 const LEVELS = [
@@ -3567,11 +3578,35 @@ const LEVELS = [
 
 const IMG_W = 1200, IMG_H = 900;
 
-function renderImage(idx, w, h){
+/* 写真の読みこみ（1回だけロードして使いまわす） */
+const photoCache = new Map();
+function loadPhoto(src){
+  if(!photoCache.has(src)){
+    photoCache.set(src, new Promise((res, rej) => {
+      const im = new Image();
+      im.onload = () => res(im);
+      im.onerror = () => rej(new Error('photo load failed: ' + src));
+      im.src = src;
+    }));
+  }
+  return photoCache.get(src);
+}
+/* 画像を切れないようにトリミングしていっぱいに描く */
+function drawCover(ctx, img, w, h){
+  const s = Math.max(w/img.width, h/img.height);
+  const sw = w/s, sh = h/s;
+  ctx.drawImage(img, (img.width-sw)/2, (img.height-sh)/2, sw, sh, 0, 0, w, h);
+}
+async function renderImage(idx, w, h){
   const cv = document.createElement('canvas');
   cv.width = w; cv.height = h;
   const ctx = cv.getContext('2d');
-  IMAGES[idx].draw(ctx, w, h, mulberry32(IMAGES[idx].seed));
+  const im = IMAGES[idx];
+  if(im.photo){
+    drawCover(ctx, await loadPhoto(im.photo), w, h);
+  }else{
+    im.draw(ctx, w, h, mulberry32(im.seed));
+  }
   return cv;
 }
 
@@ -3583,10 +3618,14 @@ const galleryEl = document.getElementById('gallery');
 const levelsEl = document.getElementById('levels');
 
 document.getElementById('imgCount').textContent = `（ぜんぶで ${IMAGES.length} しゅるい）`;
+document.getElementById('creditNote').textContent =
+  '📸のしゃしんは Wikimedia Commons のフリー画像です： ' +
+  IMAGES.filter(im => im.photo).map(im => `「${im.name}」${im.credit}`).join(' ／ ');
 let galleryFilter = 'all';
 function applyFilter(){
   [...galleryEl.children].forEach((c, k) => {
-    c.style.display = (galleryFilter === 'all' || IMAGES[k].tag === galleryFilter) ? '' : 'none';
+    const show = !c.dataset.broken && (galleryFilter === 'all' || IMAGES[k].tag === galleryFilter);
+    c.style.display = show ? '' : 'none';
   });
 }
 document.querySelectorAll('.ftab').forEach(b => {
@@ -3602,13 +3641,18 @@ document.querySelectorAll('.ftab').forEach(b => {
     const im = IMAGES[i];
     const card = document.createElement('div');
     card.className = 'card' + (i===0 ? ' sel' : '');
-    card.appendChild(renderImage(i, 440, 330));
+    try{
+      card.appendChild(await renderImage(i, 440, 330));
+    }catch(e){
+      card.dataset.broken = '1';   // 写真が読めなければかくす（番号ずれ防止のためDOMには残す）
+      card.style.display = 'none';
+    }
     const nm = document.createElement('div');
     nm.className = 'nm'; nm.textContent = im.name;
     card.appendChild(nm);
     const tg = document.createElement('div');
-    tg.className = 'tag ' + (im.tag === 'かわいい' ? 'cute' : 'photo');
-    tg.textContent = im.tag === 'かわいい' ? '🎀 かわいい' : '📷 けしき';
+    tg.className = 'tag ' + (im.tag === 'かわいい' ? 'cute' : im.tag === 'けしき' ? 'photo' : 'real');
+    tg.textContent = im.tag === 'かわいい' ? '🎀 かわいい' : im.tag === 'けしき' ? '📷 けしき' : '📸 しゃしん';
     card.appendChild(tg);
     card.onclick = () => {
       selImg = i;
@@ -3713,7 +3757,7 @@ async function startGame(imgIdx, lvlIdx){
   loading.style.display = 'flex'; loadBar.style.width = '0%';
   await nextFrame(); await nextFrame();
 
-  const full = renderImage(imgIdx, IMG_W, IMG_H);
+  const full = await renderImage(imgIdx, IMG_W, IMG_H);
   const cols = lv.cols, rows = lv.rows;
   const pw = IMG_W/cols, ph = IMG_H/rows;
   const pad = Math.ceil(Math.max(pw,ph)*0.27)+2;
@@ -3901,17 +3945,29 @@ function render(){
 
     // 完成後：絵がうごきだす！（ピースの継ぎ目がとけて生きた絵になる）
     if(G.won && G.animC){
+      const im = IMAGES[G.imgIdx];
       const tw = (Date.now()-G.winTime)/1000;
       const fade = Math.min(1, Math.max(0, (tw-0.4)/1.6));
       if(fade > 0){
-        G.animTick = (G.animTick||0)+1;
-        if(G.animTick % 2 === 1 || !G.animDrawn){ // 30fpsで十分なめらか
-          IMAGES[G.imgIdx].draw(G.animCx, IMG_W, IMG_H, mulberry32(IMAGES[G.imgIdx].seed), tw);
-          G.animDrawn = true;
+        if(im.photo){
+          // 写真はケンバーンズ効果（ゆっくりズームしながらただよう）
+          const z = 1 + 0.055*(0.5 - 0.5*Math.cos(tw*0.22));
+          const sw2 = IMG_W/z, sh2 = IMG_H/z;
+          const maxDX = (IMG_W-sw2)/2, maxDY = (IMG_H-sh2)/2;
+          const dx2 = Math.sin(tw*0.13)*maxDX*0.8, dy2 = Math.cos(tw*0.1)*maxDY*0.8;
+          bctx.globalAlpha = fade;
+          bctx.drawImage(G.full, maxDX+dx2, maxDY+dy2, sw2, sh2, G.boardX, G.boardY, IMG_W, IMG_H);
+          bctx.globalAlpha = 1;
+        }else{
+          G.animTick = (G.animTick||0)+1;
+          if(G.animTick % 2 === 1 || !G.animDrawn){ // 30fpsで十分なめらか
+            im.draw(G.animCx, IMG_W, IMG_H, mulberry32(im.seed), tw);
+            G.animDrawn = true;
+          }
+          bctx.globalAlpha = fade;
+          bctx.drawImage(G.animC, G.boardX, G.boardY);
+          bctx.globalAlpha = 1;
         }
-        bctx.globalAlpha = fade;
-        bctx.drawImage(G.animC, G.boardX, G.boardY);
-        bctx.globalAlpha = 1;
       }
     }
 
